@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -678,4 +678,719 @@
   .edit-cancel:hover { border-color: var(--ink-muted); color: var(--ink); }
 
   /* Edit pencil indicator on "other" items */
-  .edit-
+  .edit-hint {
+    font-size: 0.62rem;
+    color: var(--gold);
+    font-style: italic;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+  .challenge-item.custom-other { cursor: pointer; }
+  .challenge-item.custom-other:hover .challenge-name { color: var(--mygoals); }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<header>
+  <div class="header-ornament">
+    <span class="ward-label">Honey Field Ward</span>
+  </div>
+  <h1>Bishop's Challenge</h1>
+  <p class="subtitle">A personal record of growth &amp; consecration</p>
+  <div class="progress-strip" id="progressStrip"></div>
+</header>
+
+<nav class="tab-nav" id="tabNav"></nav>
+<main id="main"></main>
+
+<script>
+/* ═══ DATA ═══ */
+const CATEGORIES = [
+  {
+    id: 'spiritual', label: 'Spiritual', goal: 20,
+    quote: '"In coming days, it will not be possible to survive spiritually without the guiding, directing, comforting, and constant influence of the Holy Ghost"',
+    attribution: 'President Nelson',
+    challenges: [
+      { name: 'Read scriptures morning & night for 1 month', pts: 3 },
+      { name: 'Read Book of Mormon (Cover to Cover)', pts: 5 },
+      { name: 'Teach a Lesson', pts: 2 },
+      { name: 'Teach a Lesson', pts: 2 },
+      { name: 'Work with Missionaries', pts: 2 },
+      { name: 'Bear Testimony', pts: 1 },
+      { name: 'Bear Testimony', pts: 1 },
+      { name: 'Bear Testimony', pts: 1 },
+      { name: 'Bear Testimony', pts: 1 },
+      { name: 'Prepare and take 5 names to temple', pts: 2 },
+      { name: 'Memorize 13 Articles of Faith', pts: 2 },
+      { name: 'Musical number in church', pts: 2 },
+      { name: 'Prepare 72-hour emergency kit', pts: 1 },
+      { name: 'Attend Mission/Temple Prep', pts: 2 },
+      { name: 'Lead Family Scripture Study', pts: 1 },
+      { name: 'Memorize "The Living Christ"', pts: 3 },
+      { name: 'Handwrite a page of scripture', pts: 1 },
+      { name: 'Give a Talk', pts: 2 },
+      { name: 'Give a Talk', pts: 2 },
+      { name: 'Invite friend to Church', pts: 1 },
+      { name: 'Participate in Youth Camp', pts: 2 },
+      { name: 'Attend Temple (2×/month)', pts: 2 },
+      { name: 'Memorize Sacrament Prayers', pts: 1 },
+      { name: 'Memorize Family Proclamation', pts: 3 },
+      { name: 'Read every conference talk from April 2026', pts: 3 },
+      { name: 'Fast with purpose & Journal', pts: 1 },
+      { name: '100% Personal Prayer (30 days)', pts: 2 },
+      { name: 'Create a "Spiritual Strengths" list', pts: 1 },
+      { name: 'Complete a service for a leader', pts: 1 },
+      { name: 'Listen to 5 spiritual podcasts', pts: 1 },
+      { name: 'Other – Leader approved', pts: 0 },
+    ]
+  },
+  {
+    id: 'social', label: 'Social', goal: 10,
+    quote: '"Those who live only for themselves eventually shrivel up... while those who lose themselves in service to others grow and flourish"',
+    attribution: 'President Monson',
+    challenges: [
+      { name: '2-week social media fast', pts: 2 },
+      { name: '2-week social media fast', pts: 2 },
+      { name: '2-week social media fast', pts: 2 },
+      { name: '2-week social media fast', pts: 2 },
+      { name: '2-week social media fast', pts: 2 },
+      { name: '2-week social media fast', pts: 2 },
+      { name: '2-week social media fast', pts: 2 },
+      { name: '2-week social media fast', pts: 2 },
+      { name: 'Prepare 3 different meals for family or friends', pts: 2 },
+      { name: 'Participate in a school club', pts: 1 },
+      { name: 'Host an activity with friends', pts: 1 },
+      { name: 'Complete an art project with a friend', pts: 1 },
+      { name: 'Invite someone new to hang out with you', pts: 1 },
+      { name: 'Attend a musical performance with someone', pts: 3 },
+      { name: 'Invite friend to youth activity', pts: 1 },
+      { name: 'Family history interview', pts: 1 },
+      { name: '10 hours community service', pts: 3 },
+      { name: 'Team-based challenge (Escape Room)', pts: 1 },
+      { name: 'Host a themed dinner party', pts: 2 },
+      { name: 'Complete a Service Project', pts: 1 },
+      { name: 'Bake & deliver cookies', pts: 1 },
+      { name: 'Tour 4 employment locations', pts: 3 },
+      { name: 'Be part of a performance', pts: 2 },
+      { name: 'Learn about an ancestor', pts: 1 },
+      { name: 'Call a grandparent and talk for 5 minutes', pts: 2 },
+      { name: 'Prepare a presentation and present on it', pts: 2 },
+      { name: 'Attend a School Board/City Council meeting', pts: 1 },
+      { name: 'Lead a group game/activity', pts: 1 },
+      { name: 'Prepare and deliver 10 Thank-You notes', pts: 1 },
+      { name: 'Plan/Prep an entire group meal', pts: 2 },
+      { name: 'Teach a skill to a friend or family member', pts: 1 },
+      { name: 'Participate on a sports team', pts: 1 },
+      { name: 'Other – Leader approved', pts: 0 },
+    ]
+  },
+  {
+    id: 'intellectual', label: 'Intellectual', goal: 10,
+    quote: '"For members of the Church, education is not merely a good idea—it\'s a commandment"',
+    attribution: 'Elder Uchtdorf',
+    challenges: [
+      { name: 'Clean/Organize a messy room', pts: 1 },
+      { name: 'No grade lower than a B (Semester)', pts: 2 },
+      { name: 'Set/Finish a 3-month goal', pts: 3 },
+      { name: 'Identify 4 constellations', pts: 1 },
+      { name: 'Create website/cookbook/album', pts: 3 },
+      { name: '30-day Journaling streak', pts: 2 },
+      { name: 'Learn a new skill', pts: 2 },
+      { name: 'Summarize a nonfiction book', pts: 1 },
+      { name: 'Complete a geocache challenge', pts: 1 },
+      { name: 'Learn 50 words in a new language', pts: 1 },
+      { name: 'Solve a 1,000-piece puzzle', pts: 1 },
+      { name: 'Learn to change a car tire', pts: 1 },
+      { name: 'Complete bike maintenance', pts: 1 },
+      { name: 'Type 40+ WPM (speed test)', pts: 1 },
+      { name: 'Fewer than 3 tardies for the year', pts: 2 },
+      { name: 'Learn 5 useful knots', pts: 1 },
+      { name: '500+ word personal biography', pts: 2 },
+      { name: 'Read 3 books + reports', pts: 3 },
+      { name: 'Become First Aid Certified', pts: 2 },
+      { name: '3-month budget tracking', pts: 3 },
+      { name: 'Complete an online course', pts: 2 },
+      { name: 'Practice interviewing for a job', pts: 2 },
+      { name: 'Fix something broken (DIY)', pts: 1 },
+      { name: 'Memorize a famous poem/speech', pts: 1 },
+      { name: 'Watch a documentary + discuss', pts: 1 },
+      { name: 'Other – Leader approved', pts: 0 },
+    ]
+  },
+  {
+    id: 'physical', label: 'Physical', goal: 10,
+    quote: '"We should all be as fit as we can be—that\'s good Word of Wisdom doctrine."',
+    attribution: 'Elder Holland',
+    challenges: [
+      { name: 'Exercise 30 minutes a day for 2 weeks', pts: 2 },
+      { name: 'Complete 2.5-mile hike', pts: 1 },
+      { name: 'Complete 2.5-mile hike', pts: 1 },
+      { name: 'Complete 2.5-mile hike', pts: 1 },
+      { name: 'Complete 2.5-mile hike', pts: 1 },
+      { name: 'Complete 10-mile hike', pts: 3 },
+      { name: 'Swim ½ mile non-stop', pts: 3 },
+      { name: 'Run a 5K', pts: 3 },
+      { name: 'Tread water for 5 minutes', pts: 1 },
+      { name: 'Learn water safety/rescue basics', pts: 1 },
+      { name: 'Build & sleep in a shelter', pts: 3 },
+      { name: '10K steps/day for 30 days', pts: 2 },
+      { name: 'Walk 100 miles (over 3 months)', pts: 3 },
+      { name: 'Complete Backpacking Skills Course', pts: 2 },
+      { name: 'No soda for 1 month', pts: 3 },
+      { name: 'No added sugar for 1 month', pts: 3 },
+      { name: 'Complete an overnight camp (1 pt per night)', pts: 1 },
+      { name: 'Complete a 90-min Service Project', pts: 1 },
+      { name: 'Bike 15 miles in one day', pts: 2 },
+      { name: 'Eat 4 vegetables/day for 2 weeks', pts: 2 },
+      { name: '30 push-ups/day for 1 month', pts: 2 },
+      { name: 'Learn and participate in a new sport', pts: 2 },
+      { name: 'Start and extinguish a fire', pts: 1 },
+      { name: 'Go fishing and set up your own pole', pts: 1 },
+      { name: 'Clean/gut/cook a fish', pts: 1 },
+      { name: 'Plan/lead an outdoor activity', pts: 1 },
+      { name: 'Master a "personal best" (Plank/Pull-up/etc)', pts: 1 },
+      { name: 'Drink 64oz water/day for 2 weeks', pts: 2 },
+      { name: 'Other – Approved by Leader', pts: 0 },
+    ]
+  }
+];
+
+/* ═══ STATE ═══ */
+const STORAGE_KEY = 'bishopsChallenge_v4';
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return s && s.done ? s : { done: {}, goals: [], custom: {} };
+  } catch { return { done: {}, goals: [], custom: {} }; }
+}
+function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+let state = loadState();
+if (!state.custom) state.custom = {};
+
+// Helper: get effective name/pts for a challenge (may be overridden by custom)
+function getChallenge(catId, idx) {
+  const base = catObj(catId).challenges[idx];
+  const key = ikey(catId, idx);
+  if (state.custom[key]) {
+    return { ...base, name: state.custom[key].name || base.name, pts: state.custom[key].pts ?? base.pts };
+  }
+  return base;
+}
+function isOther(ch) {
+  return ch.name.toLowerCase().startsWith('other');
+}
+
+/* ═══ HELPERS ═══ */
+const ikey = (cat, idx) => `${cat}_${idx}`;
+const isDone = (cat, idx) => !!state.done[ikey(cat, idx)];
+const isGoal = (cat, idx) => state.goals.some(g => g.cat === cat && g.idx === idx);
+const catObj = id => CATEGORIES.find(c => c.id === id);
+const getCatPts = cat => cat.challenges.reduce((s, _, i) => s + (isDone(cat.id, i) ? getChallenge(cat.id, i).pts : 0), 0);
+const getProjectedPts = cat => {
+  let pts = getCatPts(cat);
+  cat.challenges.forEach((ch, i) => { if (!isDone(cat.id, i) && isGoal(cat.id, i)) pts += getChallenge(cat.id, i).pts; });
+  return pts;
+};
+let activeTab = CATEGORIES[0].id;
+
+/* ═══ BUILD PROGRESS STRIP ═══ */
+function buildProgress() {
+  const strip = document.getElementById('progressStrip');
+  strip.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const pts = getCatPts(cat);
+    const pct = Math.min(100, Math.round(pts / cat.goal * 100));
+    const d = document.createElement('div');
+    d.className = 'prog-card' + (pts >= cat.goal ? ' complete' : '');
+    d.id = `prog_${cat.id}`;
+    d.innerHTML = `<div class="prog-card-label">${cat.label}</div>
+      <div class="prog-card-score">${pts}</div>
+      <div class="prog-card-goal">goal: ${cat.goal} pts</div>
+      <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${pct}%"></div></div>`;
+    strip.appendChild(d);
+  });
+}
+
+/* ═══ BUILD NAV ═══ */
+function buildNav() {
+  const nav = document.getElementById('tabNav');
+  nav.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (cat.id === activeTab ? ' active' : '');
+    btn.dataset.tab = cat.id;
+    btn.textContent = cat.label;
+    btn.addEventListener('click', () => switchTab(cat.id));
+    nav.appendChild(btn);
+  });
+  const mgBtn = document.createElement('button');
+  mgBtn.className = 'tab-btn' + (activeTab === 'mygoals' ? ' active' : '');
+  mgBtn.dataset.tab = 'mygoals';
+  const badge = state.goals.length ? `<span class="goals-badge">${state.goals.length}</span>` : '';
+  mgBtn.innerHTML = `My Goals${badge}`;
+  mgBtn.addEventListener('click', () => switchTab('mygoals'));
+  nav.appendChild(mgBtn);
+}
+
+/* ═══ BUILD CATEGORY SECTION ═══ */
+function buildCatSection(cat) {
+  const pts = getCatPts(cat);
+  const pct = Math.min(100, Math.round(pts / cat.goal * 100));
+  const projPts = getProjectedPts(cat);
+  const projPct = Math.min(100, Math.round(projPts / cat.goal * 100));
+  const starredCount = state.goals.filter(g => g.cat === cat.id && !isDone(cat.id, g.idx)).length;
+
+
+  // Build occurrence index for duplicate names (for numbering)
+  const nameCount = {};
+  const nameOccurrence = cat.challenges.map(ch => {
+    nameCount[ch.name] = (nameCount[ch.name] || 0) + 1;
+    return nameCount[ch.name];
+  });
+  const nameTotals = {};
+  cat.challenges.forEach(ch => { nameTotals[ch.name] = (nameTotals[ch.name] || 0) + 1; });
+
+  let listHTML = '';
+  cat.challenges.forEach((ch, i) => {
+    const done = isDone(cat.id, i);
+    const starred = isGoal(cat.id, i);
+    const effective = getChallenge(cat.id, i);
+    const other = isOther(ch);
+    const inGoalsTag = starred && !done ? `<span class="in-goals-tag">★ in goals</span>` : '';
+    const numLabel = nameTotals[ch.name] > 1 ? ` <span style="font-size:0.75rem;color:var(--ink-muted);font-style:italic;">#${nameOccurrence[i]}</span>` : '';
+    const editHint = other && !done ? `<span class="edit-hint">✏ tap to edit</span>` : '';
+    const customClass = other ? ' custom-other' : '';
+    listHTML += `
+      <div class="challenge-item${done ? ' done' : (starred ? ' queued' : '')}${customClass}" id="item_${cat.id}_${i}"
+           ${other ? `data-edit="${cat.id}:${i}"` : ''}>
+        <div class="check-box" data-check="${cat.id}:${i}">${done ? '✓' : ''}</div>
+        <div class="challenge-name">${effective.name}${numLabel}</div>
+        ${editHint}
+        ${inGoalsTag}
+        <button class="star-btn${starred ? ' starred' : ''}" data-star="${cat.id}:${i}"
+                title="${starred ? 'Remove from My Goals' : 'Add to My Goals'}">
+          ${starred ? '★' : '☆'}
+        </button>
+        <div>
+          <div class="challenge-pts">${effective.pts}</div>
+          <span class="pts-label">pts</span>
+        </div>
+      </div>`;
+  });
+
+  return `
+    <div class="section-head">
+      <div class="section-title">${cat.label}</div>
+      <div class="section-quote"><strong>${cat.attribution}</strong>${cat.quote}</div>
+      <div class="goal-display">
+        <div><div class="goal-pts" id="goalpts_${cat.id}">${pts}<span>/ ${cat.goal} pts</span></div></div>
+        <div class="bar-col">
+          <div class="stacked-bar-wrap">
+            <div class="bar-done" style="width:${pct}%"></div>
+            <div class="bar-starred" style="width:${Math.min(projPct - pct, 100 - pct)}%"></div>
+          </div>
+          <div class="bar-legend">
+            <span class="legend-item"><span class="legend-dot done-dot"></span>${pts} pts done</span>
+            ${starredCount > 0 ? `<span class="legend-item"><span class="legend-dot star-dot"></span>+${projPts - pts} pts starred</span>` : ''}
+            <span class="legend-item" style="margin-left:auto;opacity:0.6;">/ ${cat.goal}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="challenge-list">${listHTML}</div>
+    <div class="complete-banner${pts >= cat.goal ? ' show' : ''}" id="banner_${cat.id}">
+      <h3>🏅 ${cat.label} Goal Complete!</h3>
+      <p>You've reached ${cat.goal} points. Well done — keep going!</p>
+    </div>
+    <div class="reset-wrap">
+      <button class="reset-btn" data-reset="${cat.id}">Reset ${cat.label} Progress</button>
+    </div>`;
+}
+
+/* ═══ BUILD MY GOALS SECTION ═══ */
+function buildMyGoalsSection() {
+  if (state.goals.length === 0) {
+    return `
+      <div class="section-head">
+        <div class="section-title">My Goals</div>
+        <div class="section-quote" style="font-style:normal;">Pick challenges to focus on by tapping ☆ on any item in the category tabs.</div>
+      </div>
+      <div class="mygoals-empty">
+        <div class="empty-icon">☆</div>
+        <h3>No goals added yet</h3>
+        <p>Browse Spiritual, Social, Intellectual, or Physical and tap ☆ to add challenges here.</p>
+      </div>`;
+  }
+
+  const totalPts = state.goals.reduce((s, g) => {
+    const cat = catObj(g.cat);
+    return s + (cat ? cat.challenges[g.idx].pts : 0);
+  }, 0);
+
+  // Group by category
+  const grouped = {};
+  state.goals.forEach(g => { (grouped[g.cat] = grouped[g.cat] || []).push(g.idx); });
+
+  let groupsHTML = '';
+  CATEGORIES.forEach(cat => {
+    if (!grouped[cat.id]) return;
+    let itemsHTML = '';
+    grouped[cat.id].forEach(idx => {
+      const eff = getChallenge(cat.id, idx);
+      itemsHTML += `
+        <div class="mygoals-item" id="mgitem_${cat.id}_${idx}">
+          <button class="mg-check-btn" data-mgcheck="${cat.id}:${idx}" title="Mark complete">✓</button>
+          <div class="challenge-name">${eff.name}</div>
+          <div class="mg-pts">${eff.pts}<span class="pts-label">pts</span></div>
+          <button class="mg-remove-btn" data-mgremove="${cat.id}:${idx}" title="Remove">✕</button>
+        </div>`;
+    });
+    groupsHTML += `
+      <div class="mygoals-group ${cat.id}">
+        <div class="mygoals-group-label">${cat.label}</div>
+        ${itemsHTML}
+      </div>`;
+  });
+
+  return `
+    <div class="section-head">
+      <div class="section-title">My Goals</div>
+      <div class="section-quote" style="font-style:normal;">Challenges you're actively working on.</div>
+    </div>
+    <div class="mygoals-meta">
+      <div class="mygoals-count">${state.goals.length} challenge${state.goals.length !== 1 ? 's' : ''}</div>
+      <span style="color:var(--gold);font-family:'Playfair Display',serif;font-weight:700;">${totalPts} pts potential</span>
+    </div>
+    <div class="mygoals-hint">Tap ✓ to complete — marks it off everywhere and removes it from this list.</div>
+    ${groupsHTML}`;
+}
+
+/* ═══ FULL RENDER ═══ */
+function renderAll() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  CATEGORIES.forEach(cat => {
+    const sec = document.createElement('section');
+    sec.id = `sec_${cat.id}`;
+    sec.className = `section ${cat.id}${activeTab === cat.id ? ' active' : ''}`;
+    sec.innerHTML = buildCatSection(cat);
+    main.appendChild(sec);
+  });
+
+  const mgSec = document.createElement('section');
+  mgSec.id = 'sec_mygoals';
+  mgSec.className = `section mygoals${activeTab === 'mygoals' ? ' active' : ''}`;
+  mgSec.innerHTML = buildMyGoalsSection();
+  main.appendChild(mgSec);
+
+  attachEvents();
+  buildNav();
+  buildProgress();
+}
+
+/* ═══ ATTACH EVENTS ═══ */
+function attachEvents() {
+  // Check boxes on category pages
+  document.querySelectorAll('[data-check]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const [cat, idx] = el.dataset.check.split(':');
+      toggleDone(cat, parseInt(idx));
+    });
+  });
+
+  // Star buttons
+  document.querySelectorAll('[data-star]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const [cat, idx] = btn.dataset.star.split(':');
+      toggleGoal(cat, parseInt(idx));
+    });
+  });
+
+  // Reset buttons
+  document.querySelectorAll('[data-reset]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      resetCat(btn.dataset.reset);
+    });
+  });
+
+  // My Goals: complete buttons
+  document.querySelectorAll('[data-mgcheck]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [cat, idx] = btn.dataset.mgcheck.split(':');
+      completeFromGoals(cat, parseInt(idx));
+    });
+  });
+
+  // My Goals: remove buttons
+  document.querySelectorAll('[data-mgremove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [cat, idx] = btn.dataset.mgremove.split(':');
+      removeGoal(cat, parseInt(idx));
+    });
+  });
+
+  // Edit "other" challenges
+  document.querySelectorAll('[data-edit]').forEach(el => {
+    el.addEventListener('click', e => {
+      // don't trigger if they clicked the check or star buttons
+      if (e.target.closest('[data-check]') || e.target.closest('[data-star]')) return;
+      const [cat, idx] = el.dataset.edit.split(':');
+      openEditModal(cat, parseInt(idx));
+    });
+  });
+}
+
+/* ═══ ACTIONS ═══ */
+
+function toggleDone(catId, idx) {
+  const key = ikey(catId, idx);
+  const wasDone = state.done[key];
+  state.done[key] = !state.done[key];
+  if (state.done[key]) {
+    state.goals = state.goals.filter(g => !(g.cat === catId && g.idx === idx));
+  } else {
+    // un-completing: clear celebration so it can re-fire if goal is re-met
+    _celebrated.delete(catId);
+    localStorage.setItem('bishopsChallenge_celebrated', JSON.stringify([..._celebrated]));
+  }
+  saveState();
+  renderAll();
+  if (!wasDone) checkAndCelebrate(catId);
+}
+
+function toggleGoal(catId, idx) {
+  if (isDone(catId, idx)) return; // can't goal a done item
+  const existing = state.goals.findIndex(g => g.cat === catId && g.idx === idx);
+  if (existing >= 0) state.goals.splice(existing, 1);
+  else state.goals.push({ cat: catId, idx });
+  saveState();
+  renderAll();
+}
+
+function removeGoal(catId, idx) {
+  state.goals = state.goals.filter(g => !(g.cat === catId && g.idx === idx));
+  saveState();
+  renderAll();
+}
+
+function completeFromGoals(catId, idx) {
+  const el = document.getElementById(`mgitem_${catId}_${idx}`);
+  const finish = () => {
+    state.done[ikey(catId, idx)] = true;
+    state.goals = state.goals.filter(g => !(g.cat === catId && g.idx === idx));
+    saveState();
+    renderAll();
+    checkAndCelebrate(catId);
+  };
+  if (el) {
+    el.classList.add('completing');
+    setTimeout(finish, 380);
+  } else { finish(); }
+}
+
+function resetCat(catId) {
+  if (!confirm(`Reset all ${catId} progress and remove its goals?`)) return;
+  catObj(catId).challenges.forEach((_, i) => delete state.done[ikey(catId, i)]);
+  state.goals = state.goals.filter(g => g.cat !== catId);
+  saveState();
+  renderAll();
+}
+
+function switchTab(tabId) {
+  activeTab = tabId;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === `sec_${tabId}`));
+}
+
+/* ═══ CONFETTI ENGINE ═══ */
+const _canvas = document.getElementById('confetti-canvas');
+const _ctx = _canvas.getContext('2d');
+let _particles = [];
+let _animId = null;
+
+const CAT_COLORS = {
+  spiritual:    ['#4a6741','#7ab870','#c9e8c4','#e8cb7a','#ffffff'],
+  social:       ['#3d5a7a','#6a9bc4','#b8d4e8','#e8cb7a','#ffffff'],
+  intellectual: ['#6b4a7a','#a87ab8','#dcc4e8','#e8cb7a','#ffffff'],
+  physical:     ['#7a3d3d','#c47a7a','#e8c4c4','#e8cb7a','#ffffff'],
+};
+const DEFAULT_COLORS = ['#c9a84c','#e8cb7a','#4a6741','#3d5a7a','#6b4a7a','#7a3d3d','#ffffff'];
+
+function launchConfetti(catId) {
+  _canvas.width  = window.innerWidth;
+  _canvas.height = window.innerHeight;
+  const colors = CAT_COLORS[catId] || DEFAULT_COLORS;
+
+  // spawn 160 particles
+  for (let i = 0; i < 160; i++) {
+    const angle = (Math.random() * Math.PI * 2);
+    const speed = 4 + Math.random() * 8;
+    _particles.push({
+      x: window.innerWidth  * (0.3 + Math.random() * 0.4),
+      y: window.innerHeight * 0.35,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - (6 + Math.random() * 6),
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: 5 + Math.random() * 6,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle',
+      rot: Math.random() * Math.PI * 2,
+      rotV: (Math.random() - 0.5) * 0.2,
+      gravity: 0.3 + Math.random() * 0.15,
+      life: 1,
+      decay: 0.012 + Math.random() * 0.008,
+    });
+  }
+
+  if (_animId) cancelAnimationFrame(_animId);
+  animateConfetti();
+}
+
+function animateConfetti() {
+  _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
+  _particles = _particles.filter(p => p.life > 0);
+
+  _particles.forEach(p => {
+    p.x  += p.vx;
+    p.y  += p.vy;
+    p.vy += p.gravity;
+    p.vx *= 0.99;
+    p.rot += p.rotV;
+    p.life -= p.decay;
+
+    _ctx.save();
+    _ctx.globalAlpha = Math.max(0, p.life);
+    _ctx.translate(p.x, p.y);
+    _ctx.rotate(p.rot);
+    _ctx.fillStyle = p.color;
+    if (p.shape === 'rect') {
+      _ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+    } else {
+      _ctx.beginPath();
+      _ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+      _ctx.fill();
+    }
+    _ctx.restore();
+  });
+
+  if (_particles.length > 0) {
+    _animId = requestAnimationFrame(animateConfetti);
+  } else {
+    _ctx.clearRect(0, 0, _canvas.width, _canvas.height);
+    _animId = null;
+  }
+}
+
+/* ═══ CELEBRATION MODAL ═══ */
+const CAT_MEDALS = { spiritual: '🙏', social: '🤝', intellectual: '📚', physical: '💪' };
+
+function showCelebration(catId) {
+  const cat = catObj(catId);
+  // remove any existing
+  const old = document.getElementById('goal-celebration');
+  if (old) old.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'goal-celebration';
+  overlay.id = 'goal-celebration';
+  overlay.innerHTML = `
+    <div class="goal-celebration-card">
+      <div class="medal">${CAT_MEDALS[catId] || '🏅'}</div>
+      <h2>Goal Reached!</h2>
+      <p>You've hit <strong style="color:var(--gold-light)">${cat.goal} points</strong> in ${cat.label}.<br>Incredible work — keep it up!</p>
+      <button id="celebClose">Continue</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  document.getElementById('celebClose').addEventListener('click', () => {
+    overlay.querySelector('.goal-celebration-card').style.animation = 'celebOut 0.3s ease forwards';
+    setTimeout(() => overlay.remove(), 300);
+  });
+
+  launchConfetti(catId);
+}
+
+/* track which cats have already celebrated so we don't repeat */
+const _celebrated = new Set(
+  (() => {
+    try { return JSON.parse(localStorage.getItem('bishopsChallenge_celebrated') || '[]'); } catch { return []; }
+  })()
+);
+
+function checkAndCelebrate(catId) {
+  if (_celebrated.has(catId)) return;
+  const cat = catObj(catId);
+  if (getCatPts(cat) >= cat.goal) {
+    _celebrated.add(catId);
+    localStorage.setItem('bishopsChallenge_celebrated', JSON.stringify([..._celebrated]));
+    setTimeout(() => showCelebration(catId), 400);
+  }
+}
+
+/* ═══ EDIT MODAL ═══ */
+function openEditModal(catId, idx) {
+  const existing = document.getElementById('edit-overlay');
+  if (existing) existing.remove();
+
+  const effective = getChallenge(catId, idx);
+  const overlay = document.createElement('div');
+  overlay.className = 'edit-overlay';
+  overlay.id = 'edit-overlay';
+  overlay.innerHTML = `
+    <div class="edit-modal">
+      <h3>Leader-Approved Challenge</h3>
+      <div class="edit-field">
+        <label>Challenge Name</label>
+        <input type="text" id="editName" value="${effective.name.startsWith('Other') ? '' : effective.name}"
+               placeholder="e.g. Attend a fireside" maxlength="80" />
+      </div>
+      <div class="edit-field">
+        <label>Points</label>
+        <input type="number" id="editPts" value="${effective.pts || ''}" placeholder="1" min="0" max="20" />
+      </div>
+      <div class="edit-actions">
+        <button class="edit-cancel" id="editCancel">Cancel</button>
+        <button class="edit-save" id="editSave">Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const nameInput = document.getElementById('editName');
+  nameInput.focus();
+  nameInput.select();
+
+  document.getElementById('editCancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  document.getElementById('editSave').addEventListener('click', () => {
+    const newName = document.getElementById('editName').value.trim();
+    const newPts  = parseInt(document.getElementById('editPts').value) || 0;
+    if (!newName) { document.getElementById('editName').focus(); return; }
+    state.custom[ikey(catId, idx)] = { name: newName, pts: newPts };
+    saveState();
+    overlay.remove();
+    renderAll();
+  });
+
+  // Save on Enter
+  document.getElementById('editPts').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('editSave').click();
+  });
+  nameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('editPts').focus();
+  });
+}
+
+/* ═══ INIT ═══ */
+buildProgress();
+buildNav();
+renderAll();
+// check on load in case goals were already met
+CATEGORIES.forEach(cat => checkAndCelebrate(cat.id));
+</script>
+</body>
+</html>
